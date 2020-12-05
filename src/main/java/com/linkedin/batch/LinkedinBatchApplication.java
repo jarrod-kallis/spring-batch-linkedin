@@ -8,6 +8,7 @@ import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.job.flow.JobExecutionDecider;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
@@ -27,6 +28,11 @@ public class LinkedinBatchApplication {
 
 	@Autowired
 	public StepBuilderFactory stepBuilderFactory;
+	
+	@Bean
+	public JobExecutionDecider decider() {
+		return new DeliveryDecider();
+	}
 
 	public static void main(String[] args) {
 		SpringApplication.run(LinkedinBatchApplication.class, args);
@@ -37,12 +43,17 @@ public class LinkedinBatchApplication {
 		return this.jobBuilderFactory
 				.get("deliverPackageJob")
 				.start(packageItemStep())
-				.next(driveToAddressStep())				
-					.on("FAILED") // Check exit status of driveToAddressStep
-					.to(storePackageStep())
-				.from(driveToAddressStep()) // from = else if
-					.on("*") // on = equals
-					.to(givePackageToCustomerStep()) // to = then
+				.next(driveToAddressStep())	
+					.on("FAILED") // Check EXIT_STATUS of driveToAddressStep - we got lost
+					.to(storePackageStep()) // If we got lost store the package
+				.from(driveToAddressStep()) // else if
+					.on("*") // Any other EXIT_STATUS
+					.to(decider())
+						.on("PRESENT") // Customer was there to receive the package
+						.to(givePackageToCustomerStep())
+					.from(decider()) // else if
+						.on("NOT_PRESENT") // Customer was not there
+						.to(leavePackageAtDoorStep())
 				.end()
 				.build();
 	}
@@ -102,6 +113,18 @@ public class LinkedinBatchApplication {
 			@Override
 			public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
 				System.out.println("Unable to deliver package. Storing it.");
+				return RepeatStatus.FINISHED;
+			}
+		}).build();
+	}
+	
+	@Bean
+	public Step leavePackageAtDoorStep() {
+		return this.stepBuilderFactory.get("leavePackageAtDoorStep").tasklet(new Tasklet() {
+
+			@Override
+			public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
+				System.out.println("Customer not home. Leaving the package at the door.");
 				return RepeatStatus.FINISHED;
 			}
 		}).build();
