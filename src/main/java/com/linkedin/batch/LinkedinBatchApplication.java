@@ -34,7 +34,8 @@ public class LinkedinBatchApplication {
 
 	@Bean
 	public Job deliverPackageJob() {
-		return this.jobBuilderFactory.get("deliverPackageJob").start(packageItemStep()).build();
+		return this.jobBuilderFactory.get("deliverPackageJob").start(packageItemStep()).next(driveToAddressStep())
+				.next(givePackageToCustomerStep()).build();
 	}
 
 	@Bean
@@ -50,6 +51,30 @@ public class LinkedinBatchApplication {
 				String date = jobParameters.get("run.date").toString();
 
 				System.out.println(String.format("The %s have been packaged on %s", item, date));
+				return RepeatStatus.FINISHED;
+			}
+		}).build();
+	}
+
+	@Bean
+	public Step driveToAddressStep() {
+		return this.stepBuilderFactory.get("driveToAddressStep").tasklet(new Tasklet() {
+
+			@Override
+			public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
+				System.out.println("Successfully arrived at the address.");
+				return RepeatStatus.FINISHED;
+			}
+		}).build();
+	}
+
+	@Bean
+	public Step givePackageToCustomerStep() {
+		return this.stepBuilderFactory.get("givePackageToCustomerStep").tasklet(new Tasklet() {
+
+			@Override
+			public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
+				System.out.println("Given the package to the customer.");
 				return RepeatStatus.FINISHED;
 			}
 		}).build();
