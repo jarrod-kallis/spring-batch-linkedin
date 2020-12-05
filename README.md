@@ -15,3 +15,9 @@ https://www.linkedin.com/learning/spring-spring-batch
 
 ## Change H2 entry to MySQL
 ![MySQL in POM](README_files/05-MySQL-in-POM.png)
+
+## Package Application as a JAR
+![Package Application as a JAR](README_files/06-Package-Application-as-JAR.png)
+
+### Maven commands: Clean & Package
+![Clean & Package](README_files/07-Clean-Package.png)

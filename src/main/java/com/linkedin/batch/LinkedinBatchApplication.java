@@ -1,5 +1,7 @@
 package com.linkedin.batch;
 
+import java.util.Map;
+
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepContribution;
@@ -41,7 +43,13 @@ public class LinkedinBatchApplication {
 
 			@Override
 			public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
-				System.out.println("The item has been packaged");
+				// java -jar target/.jar "item=shoes" "run.date(date)=2020/01/31"
+
+				Map<String, Object> jobParameters = chunkContext.getStepContext().getJobParameters();
+				String item = jobParameters.get("item").toString();
+				String date = jobParameters.get("run.date").toString();
+
+				System.out.println(String.format("The %s have been packaged on %s", item, date));
 				return RepeatStatus.FINISHED;
 			}
 		}).build();
