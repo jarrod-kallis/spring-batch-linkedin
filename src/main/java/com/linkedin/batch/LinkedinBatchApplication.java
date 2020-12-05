@@ -30,8 +30,13 @@ public class LinkedinBatchApplication {
 	public StepBuilderFactory stepBuilderFactory;
 	
 	@Bean
-	public JobExecutionDecider decider() {
+	public JobExecutionDecider deliveryDecider() {
 		return new DeliveryDecider();
+	}
+	
+	@Bean
+	public JobExecutionDecider itemDecider() {
+		return new ItemCorrectnessDecider();
 	}
 
 	public static void main(String[] args) {
@@ -48,10 +53,12 @@ public class LinkedinBatchApplication {
 					.to(storePackageStep()) // If we got lost store the package
 				.from(driveToAddressStep()) // else if
 					.on("*") // Any other EXIT_STATUS
-					.to(decider())
+					.to(deliveryDecider())
 						.on("PRESENT") // Customer was there to receive the package
 						.to(givePackageToCustomerStep())
-					.from(decider()) // else if
+							.next(itemDecider()).on("ITEM_CORRECT").to(thankCustomerStep())
+							.from(itemDecider()).on("ITEM_INCORRECT").to(giveRefundStep())
+					.from(deliveryDecider()) // else if
 						.on("NOT_PRESENT") // Customer was not there
 						.to(leavePackageAtDoorStep())
 				.end()
@@ -125,6 +132,30 @@ public class LinkedinBatchApplication {
 			@Override
 			public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
 				System.out.println("Customer not home. Leaving the package at the door.");
+				return RepeatStatus.FINISHED;
+			}
+		}).build();
+	}
+	
+	@Bean
+	public Step thankCustomerStep() {
+		return this.stepBuilderFactory.get("thankCustomerStep").tasklet(new Tasklet() {
+
+			@Override
+			public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
+				System.out.println("Item was correct. Thank customer.");
+				return RepeatStatus.FINISHED;
+			}
+		}).build();
+	}
+	
+	@Bean
+	public Step giveRefundStep() {
+		return this.stepBuilderFactory.get("giveRefundStep").tasklet(new Tasklet() {
+
+			@Override
+			public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
+				System.out.println("Item was incorrect. Refund customer.");
 				return RepeatStatus.FINISHED;
 			}
 		}).build();
