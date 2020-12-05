@@ -34,8 +34,17 @@ public class LinkedinBatchApplication {
 
 	@Bean
 	public Job deliverPackageJob() {
-		return this.jobBuilderFactory.get("deliverPackageJob").start(packageItemStep()).next(driveToAddressStep())
-				.next(givePackageToCustomerStep()).build();
+		return this.jobBuilderFactory
+				.get("deliverPackageJob")
+				.start(packageItemStep())
+				.next(driveToAddressStep())				
+					.on("FAILED") // Check exit status of driveToAddressStep
+					.to(storePackageStep())
+				.from(driveToAddressStep()) // from = else if
+					.on("*") // on = equals
+					.to(givePackageToCustomerStep()) // to = then
+				.end()
+				.build();
 	}
 
 	@Bean
@@ -58,10 +67,16 @@ public class LinkedinBatchApplication {
 
 	@Bean
 	public Step driveToAddressStep() {
+		boolean gotLost = false;
+
 		return this.stepBuilderFactory.get("driveToAddressStep").tasklet(new Tasklet() {
 
 			@Override
 			public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
+				if (gotLost) {
+					throw new RuntimeException("Got Lost driving to the address");
+				}
+
 				System.out.println("Successfully arrived at the address.");
 				return RepeatStatus.FINISHED;
 			}
@@ -75,6 +90,18 @@ public class LinkedinBatchApplication {
 			@Override
 			public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
 				System.out.println("Given the package to the customer.");
+				return RepeatStatus.FINISHED;
+			}
+		}).build();
+	}
+
+	@Bean
+	public Step storePackageStep() {
+		return this.stepBuilderFactory.get("storePackageStep").tasklet(new Tasklet() {
+
+			@Override
+			public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
+				System.out.println("Unable to deliver package. Storing it.");
 				return RepeatStatus.FINISHED;
 			}
 		}).build();
