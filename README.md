@@ -2,7 +2,7 @@
 https://www.linkedin.com/learning/spring-spring-batch
 
 ## Create Schema
-![Create Schema](README_files/01 Create Schema.png)
+![Create Schema](README_files/01-Create-Schema.png)
 
 ## Add User
 ![Add User](README_files/02 Add User.png) 
