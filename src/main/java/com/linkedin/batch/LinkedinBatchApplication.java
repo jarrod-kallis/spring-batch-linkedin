@@ -50,7 +50,9 @@ public class LinkedinBatchApplication {
 				.start(packageItemStep())
 				.next(driveToAddressStep())	
 					.on("FAILED") // Check EXIT_STATUS of driveToAddressStep - we got lost
-					.to(storePackageStep()) // If we got lost store the package
+//					.to(storePackageStep()) // If we got lost store the package
+//					.stop() // Stop the job execution: BATCH_STATUS = STOPPED (Allows restarting)
+					.fail() // Fail the job execution: BATCH_STATUS = FAILED (Allows restarting)
 				.from(driveToAddressStep()) // else if
 					.on("*") // Any other EXIT_STATUS
 					.to(deliveryDecider())
