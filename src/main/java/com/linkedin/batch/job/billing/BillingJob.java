@@ -31,7 +31,8 @@ public class BillingJob {
 	@Bean
 	public Job billCustomerJob() {
 		return this.jobBuilderFactory.get("billCustomerJob")
-				.start(sendInvoiceStep()).build();
+				.start(sendInvoiceStep())
+				.build();
 	}
 	
 	@Bean

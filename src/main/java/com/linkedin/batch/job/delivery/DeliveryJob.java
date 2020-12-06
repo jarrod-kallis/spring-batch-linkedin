@@ -14,14 +14,13 @@ import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.task.SimpleAsyncTaskExecutor;
 
+import com.linkedin.batch.job.billing.BillingFlow;
 import com.linkedin.batch.job.billing.BillingJob;
 import com.linkedin.batch.job.flow.CommonFlows;
 
 @Configuration
-//Causes several beans to be registered within Spring's IOC container: 
-//JobRepository, JobLauncher, JobRegistry & a transaction manager
-@EnableBatchProcessing
 public class DeliveryJob {
 
 	@Autowired
@@ -36,13 +35,17 @@ public class DeliveryJob {
 	@Autowired
 	public BillingJob billingJob;
 	
+	@Autowired
+	public BillingFlow billingFlow;
+	
 	@Bean
 	public Job deliverPackageJob() {
-		return this.jobBuilderFactory
-				.get("deliverPackageJob")
+		return this.jobBuilderFactory.get("deliverPackageJob")
 				.start(packageItemStep())
-					.on("*").to(this.commonFlows.deliveryFlow())
-				.next(this.billingJob.billCustomerJobStep())
+//					.on("*").to(this.commonFlows.deliveryFlow())
+//				.next(this.billingJob.billCustomerJobStep())
+				.split(new SimpleAsyncTaskExecutor()) // This doesn't work. These 2 flows are run before packageItemStep???
+					.add(this.commonFlows.deliveryFlow(), this.billingFlow.billCustomerFlow())
 				.end()
 				.build();
 	}

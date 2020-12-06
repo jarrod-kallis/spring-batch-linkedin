@@ -18,7 +18,6 @@ import com.linkedin.batch.job.billing.BillingJob;
 import com.linkedin.batch.job.flow.CommonFlows;
 
 @Configuration
-@EnableBatchProcessing
 public class PrepareFlowers {
 
 	@Autowired
