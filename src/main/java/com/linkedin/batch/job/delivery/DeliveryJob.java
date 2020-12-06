@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.linkedin.batch.job.billing.BillingJob;
 import com.linkedin.batch.job.flow.CommonFlows;
 
 @Configuration
@@ -30,14 +31,18 @@ public class DeliveryJob {
 	public StepBuilderFactory stepBuilderFactory;
 	
 	@Autowired
-	public CommonFlows commonFlows; 
+	public CommonFlows commonFlows;
+	
+	@Autowired
+	public BillingJob billingJob;
 	
 	@Bean
 	public Job deliverPackageJob() {
 		return this.jobBuilderFactory
 				.get("deliverPackageJob")
 				.start(packageItemStep())
-					.on("*").to(commonFlows.deliveryFlow())
+					.on("*").to(this.commonFlows.deliveryFlow())
+				.next(this.billingJob.billCustomerJobStep())
 				.end()
 				.build();
 	}

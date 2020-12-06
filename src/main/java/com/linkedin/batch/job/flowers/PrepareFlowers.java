@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.linkedin.batch.job.billing.BillingJob;
 import com.linkedin.batch.job.flow.CommonFlows;
 
 @Configuration
@@ -29,6 +30,9 @@ public class PrepareFlowers {
 	@Autowired
 	public CommonFlows commonFlows;
 	
+	@Autowired
+	public BillingJob billingJob;
+	
 	@Bean
 	public StepExecutionListener selectedFlowerListener() {
 		return new FlowerSelectionStepExecutionListener();
@@ -41,7 +45,8 @@ public class PrepareFlowers {
         			.on("TRIM_REQUIRED").to(removeThornsStep()).next(arrangeFlowersStep())
         		.from(selectFlowersStep())
         			.on("NO_TRIM_REQUIRED").to(arrangeFlowersStep())
-        		.on("*").to(commonFlows.deliveryFlow())
+        		.on("*").to(this.commonFlows.deliveryFlow())
+        		.next(this.billingJob.billCustomerJobStep())
         		.end()
         		.build();
     }
