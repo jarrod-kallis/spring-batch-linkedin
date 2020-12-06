@@ -14,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.linkedin.batch.job.flow.CommonFlows;
+
 @Configuration
 @EnableBatchProcessing
 public class PrepareFlowers {
@@ -23,6 +25,9 @@ public class PrepareFlowers {
 
 	@Autowired
 	public StepBuilderFactory stepBuilderFactory;
+	
+	@Autowired
+	public CommonFlows commonFlows;
 	
 	@Bean
 	public StepExecutionListener selectedFlowerListener() {
@@ -36,6 +41,7 @@ public class PrepareFlowers {
         			.on("TRIM_REQUIRED").to(removeThornsStep()).next(arrangeFlowersStep())
         		.from(selectFlowersStep())
         			.on("NO_TRIM_REQUIRED").to(arrangeFlowersStep())
+        		.on("*").to(commonFlows.deliveryFlow())
         		.end()
         		.build();
     }
