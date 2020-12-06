@@ -1,0 +1,1 @@
+java -jar -Dspring.batch.job.names=prepareFlowersJob target\linkedin-batch-01-04-0.0.1-SNAPSHOT.jar "type=%1" "run.date=%2"

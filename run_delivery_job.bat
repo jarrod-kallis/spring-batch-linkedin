@@ -1,0 +1,1 @@
+java -jar -Dspring.batch.job.names=deliverPackageJob target\linkedin-batch-01-04-0.0.1-SNAPSHOT.jar "item=shoes" "run.date=%1"
