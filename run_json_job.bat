@@ -1,0 +1,1 @@
+java -jar -Dspring.batch.job.names=jsonJobConfig target\linkedin-batch-01-04-0.0.1-SNAPSHOT.jar "run.date=%1"
