@@ -77,6 +77,7 @@ public class JsonJob {
 	}
 	
 	// https://docs-stage.spring.io/spring-batch/docs/current/reference/html/readersAndWriters.html#jsonfileitemwriter
+	@Bean
 	public JsonFileItemWriter<Order> jsonItemWriter() {
 		return new JsonFileItemWriterBuilder<Order>()			
 			.jsonObjectMarshaller(new JacksonJsonObjectMarshaller<Order>())

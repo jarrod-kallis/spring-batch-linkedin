@@ -20,11 +20,15 @@ import org.springframework.batch.item.file.mapping.DefaultLineMapper;
 import org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor;
 import org.springframework.batch.item.file.transform.DelimitedLineAggregator;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
+import org.springframework.batch.item.json.JacksonJsonObjectMarshaller;
+import org.springframework.batch.item.json.builder.JsonFileItemWriterBuilder;
 import org.springframework.batch.item.validator.BeanValidatingItemProcessor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.FileSystemResource;
+
+import com.linkedin.batch.job.json.JsonJob;
 
 @Configuration
 public class ChunkBasedJob {
@@ -168,11 +172,13 @@ public class ChunkBasedJob {
 	@Bean
 	public Step chunkStep() throws Exception {
 		return this.stepBuilderFactory.get("chunkStep")
-				.<Order, Order>chunk(10)
+//				.<Order, Order>chunk(10)
+				.<Order, TrackedOrder>chunk(10)
 //				.reader(flatFileItemReader())
 //				.reader(jdbcCursorItemReader())
 				.reader(jdbcPagingItemReader())
-				.processor(orderValidatingItemProcessor())
+//				.processor(orderValidatingItemProcessor())
+				.processor(trackedOrderItemProcessor())
 //				.writer(new ItemWriter<Order>() {
 //
 //					@Override
@@ -183,7 +189,8 @@ public class ChunkBasedJob {
 //					
 //				})
 //				.writer(flatFileItemWriter())
-				.writer(jdbcBatchItemWriter())
+//				.writer(jdbcBatchItemWriter())
+				.writer(jsonFileItemWriter())
 				.build();
 	}
 
@@ -196,6 +203,11 @@ public class ChunkBasedJob {
 		itemProcessor.setFilter(true);
 		
 		return itemProcessor;
+	}
+	
+	@Bean
+	public ItemProcessor<Order, TrackedOrder> trackedOrderItemProcessor() {
+		return new TrackedOrderItemProcessor();		
 	}
 
 	@Bean
@@ -225,6 +237,15 @@ public class ChunkBasedJob {
 //				.itemPreparedStatementSetter(new OrderItemPreparedStatementSetter())
 				.sql(INSERT_ORDER_SQL_NAMED_PARAMS)
 				.beanMapped() // Maps the names of the fields in the Order class to the named params in the SQL
+				.build();
+	}
+	
+	@Bean
+	public ItemWriter<TrackedOrder> jsonFileItemWriter() {
+		return new JsonFileItemWriterBuilder<TrackedOrder>()			
+				.jsonObjectMarshaller(new JacksonJsonObjectMarshaller<TrackedOrder>())
+				.resource(new FileSystemResource("src/main/java/com/linkedin/batch/job/json/shipped_orders_output.json"))
+				.name("jsonFileItemWriter")
 				.build();
 	}
 }
