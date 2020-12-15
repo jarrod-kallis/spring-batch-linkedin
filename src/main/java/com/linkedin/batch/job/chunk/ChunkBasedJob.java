@@ -1,13 +1,12 @@
 package com.linkedin.batch.job.chunk;
 
-import java.util.List;
-
 import javax.sql.DataSource;
 
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.database.PagingQueryProvider;
@@ -21,6 +20,7 @@ import org.springframework.batch.item.file.mapping.DefaultLineMapper;
 import org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor;
 import org.springframework.batch.item.file.transform.DelimitedLineAggregator;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
+import org.springframework.batch.item.validator.BeanValidatingItemProcessor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -172,6 +172,7 @@ public class ChunkBasedJob {
 //				.reader(flatFileItemReader())
 //				.reader(jdbcCursorItemReader())
 				.reader(jdbcPagingItemReader())
+				.processor(orderValidatingItemProcessor())
 //				.writer(new ItemWriter<Order>() {
 //
 //					@Override
@@ -184,6 +185,17 @@ public class ChunkBasedJob {
 //				.writer(flatFileItemWriter())
 				.writer(jdbcBatchItemWriter())
 				.build();
+	}
+
+	@Bean
+	public ItemProcessor<Order, Order> orderValidatingItemProcessor() {
+		// This validation item processor uses JSR-380 annotations on the bean to validate it
+		BeanValidatingItemProcessor<Order> itemProcessor = new BeanValidatingItemProcessor<Order>();
+		
+		// If filter is false the item processor will throw an error if there is a validation exception
+		itemProcessor.setFilter(true);
+		
+		return itemProcessor;
 	}
 
 	@Bean

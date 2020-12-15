@@ -3,6 +3,8 @@ package com.linkedin.batch.job.chunk;
 import java.math.BigDecimal;
 import java.util.Date;
 
+import javax.validation.constraints.Pattern;
+
 public class Order {
 
 	private Long orderId;
@@ -11,6 +13,9 @@ public class Order {
 
 	private String lastName;
 
+	// This pattern is adhered to by ChunkBasedJob.orderValidatingItemProcessor
+	// It will only allow email addresses ending in .gov through to be written
+	@Pattern(regexp = ".*\\.gov")
 	private String email;
 
 	private BigDecimal cost;
